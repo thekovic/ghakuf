@@ -500,11 +500,11 @@ impl MidiEventBuilder {
                 pressure: self.data[0],
             },
             0xe0 => {
-                let lsb = self.data[0] as u16;
-                let msb = (self.data[1] as u16) << 8;
+                let lsb = (self.data[0] & 0x7f) as u16;
+                let msb = ((self.data[1] & 0x7f) as u16) << 7;
                 MidiEvent::PitchBendChange {
                     ch: self.status & 0x0f,
-                    data: (msb & lsb) as i16 - 8192,
+                    data: (msb | lsb) as i16 - 8192,
                 }
             }
             _ => MidiEvent::Unknown {
@@ -529,8 +529,8 @@ impl MessageTool for MidiEvent {
                 let pitch_bend: u16 = (data + 8192) as u16;
                 vec![
                     self.status_byte(),
-                    (pitch_bend >> 7) as u8,
                     (pitch_bend & 0b1111111) as u8,
+                    ((pitch_bend >> 7) & 0x7f) as u8,
                 ]
             }
             MidiEvent::Unknown { .. } => vec![self.status_byte()],
